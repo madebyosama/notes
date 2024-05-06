@@ -1,0 +1,6 @@
+body {
+  max-width: 900px;
+  margin: auto;
+  box-sizing: border-box;
+  padding-top: 64px;
+}
