@@ -69,7 +69,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className={styles.notes}>
       <div>
         <form className={styles.form}>
           <textarea required className={styles.textarea} placeholder='Note' />
