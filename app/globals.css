@@ -1,6 +1,26 @@
+:root {
+  --icon-color: #4d4d4d;
+}
+
+html {
+  scroll-behavior: smooth !important;
+  overflow-y: scroll;
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
-  max-width: 900px;
+  max-width: 638px;
   margin: auto;
   box-sizing: border-box;
-  padding-top: 64px;
+  background-color: #fdfdfd;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #121212;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
