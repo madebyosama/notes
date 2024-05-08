@@ -43,8 +43,9 @@
   margin-bottom: 12px;
 }
 
-.text {
-  color: #4d4d4d;
+.text,
+.empty {
+  color: var(--text-color);
 }
 
 .delete {
@@ -72,9 +73,5 @@
   .note {
     background: #141414;
     border: 1px solid#1c1c1c;
-  }
-
-  .text {
-    color: #4d4d4d;
   }
 }

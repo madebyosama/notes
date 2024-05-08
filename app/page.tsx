@@ -135,7 +135,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <div>Empty</div>
+            <div className={styles.empty}>Empty</div>
           )}
         </div>
       )}
