@@ -20,14 +20,10 @@
   box-sizing: border-box;
   min-width: 100%;
   min-height: 150px;
-  transition: 0.3s ease-out;
 }
 
 .textarea:focus {
   background-color: white;
-  box-shadow: 0px 8px 31px #00000050;
-  transition: 0.3s ease-in;
-  transform: translateY(-3px);
 }
 
 .note {
