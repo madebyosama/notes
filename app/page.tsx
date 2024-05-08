@@ -3,6 +3,7 @@
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Loading from './components/loading/Loading';
 
 interface Note {
   _id: string;
@@ -145,7 +146,9 @@ export default function Home() {
         </form>
       </div>
       {loading ? (
-        <div>loading</div>
+        <div>
+          <Loading />
+        </div>
       ) : (
         <div>
           {notes?.length !== 0 ? (
