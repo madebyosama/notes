@@ -47,6 +47,24 @@ export default function Home() {
       />
     </svg>
   );
+
+  const copyIcon = (
+    <svg
+      width='16'
+      height='16'
+      viewBox='0 0 16 16'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <path
+        d='M11.4999 5.9C11.4982 3.83004 11.467 2.75785 10.8644 2.0237C10.7481 1.88192 10.6181 1.75193 10.4763 1.63557C9.70184 1 8.55125 1 6.25 1C3.94876 1 2.79815 1 2.0237 1.63557C1.88192 1.75192 1.75193 1.88192 1.63557 2.0237C1 2.79815 1 3.94876 1 6.25C1 8.55125 1 9.70184 1.63557 10.4763C1.75192 10.6181 1.88192 10.7481 2.0237 10.8644C2.75785 11.467 3.83004 11.4982 5.9 11.4999M5.90008 10.1C5.90008 8.1201 5.90008 7.13016 6.51516 6.51505C7.13026 5.89998 8.1202 5.89998 10.1001 5.89998H10.8001C12.78 5.89998 13.7699 5.89998 14.385 6.51505C15.0001 7.13016 15.0001 8.1201 15.0001 10.1V10.8C15.0001 12.7799 15.0001 13.7698 14.385 14.3849C13.7699 15 12.78 15 10.8001 15H10.1001C8.1202 15 7.13026 15 6.51516 14.3849C5.90008 13.7698 5.90008 12.7799 5.90008 10.8V10.1Z'
+        stroke={'var(--icon-color)'}
+        strokeWidth='1.05'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      />
+    </svg>
+  );
   useEffect(() => {
     async function fetch() {
       setLoading(true);
@@ -104,6 +122,14 @@ export default function Home() {
     }
   };
 
+  const copyTextToClipboard = async (text: string): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   return (
     <div className={styles.notes}>
       <div>
@@ -126,6 +152,12 @@ export default function Home() {
             notes?.map((note) => (
               <div key={note._id} className={styles.note}>
                 <div className={styles.text}>{note.text}</div>
+                <div
+                  className={styles.copy}
+                  onClick={() => copyTextToClipboard(note.text)}
+                >
+                  {copyIcon}
+                </div>
                 <div
                   className={styles.delete}
                   onClick={() => deleteNote(note._id)}
