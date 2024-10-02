@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Simple Notes',
 };
 
-const myFont = localFont({ src: './regular.woff2' });
+const myFont = localFont({ src: './font.woff2' });
 
 export default function RootLayout({
   children,
