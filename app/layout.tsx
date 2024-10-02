@@ -7,20 +7,7 @@ export const metadata: Metadata = {
   description: 'Simple Notes',
 };
 
-const font = localFont({
-  src: [
-    {
-      path: './assets/font/Satoshi-Medium.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: './assets/font/Satoshi-Black.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-});
+const myFont = localFont({ src: './regular.woff2' });
 
 export default function RootLayout({
   children,
@@ -29,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={font.className}>{children}</body>
+      <body className={myFont.className}>{children}</body>
     </html>
   );
 }
