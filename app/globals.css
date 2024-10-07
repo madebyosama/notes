@@ -3,6 +3,12 @@
   --text-color: #757575;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --icon-color: #888;
+  }
+}
+
 html {
   scroll-behavior: smooth !important;
   overflow-y: scroll;
