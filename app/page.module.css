@@ -86,7 +86,7 @@
 
 @media (prefers-color-scheme: dark) {
   .textarea {
-    background: #141414;
+    background: #2a2a2a;
     border: 1px solid#1c1c1c;
     color: white;
   }
