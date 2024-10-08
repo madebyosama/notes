@@ -68,6 +68,10 @@
   cursor: pointer;
 }
 
+.delete:hover {
+  background-color: #ddd;
+}
+
 .copy {
   position: absolute;
   border-radius: 999px;
@@ -103,6 +107,9 @@
 
   .text {
     color: #ccc;
+  }
+  .delete:hover {
+    background-color: #444;
   }
 }
 
