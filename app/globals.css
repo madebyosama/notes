@@ -19,12 +19,12 @@ body {
   max-width: 638px;
   margin: auto;
   box-sizing: border-box;
-  background-color: #fdfdfd;
+  background-color: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #121212;
+    background-color: #212121;
   }
 }
 
