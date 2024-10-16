@@ -45,8 +45,8 @@ export default function Home() {
       <path
         d='M14.4848 1.5154L1.51562 14.4837M14.4848 14.4846L1.51562 1.51632'
         stroke='var(--icon-color)'
-        stroke-linecap='round'
-        stroke-linejoin='round'
+        strokeLinecap='round'
+        strokeLinejoin='round'
       />
     </svg>
   );
@@ -69,32 +69,28 @@ export default function Home() {
   };
 
   const handleSubmit = () => {
-    if (!newNote) return; // Prevent adding empty notes
+    if (!newNote.trim()) return; // Prevent adding empty notes
 
     const newNoteObject = {
-      _id: Date.now().toString(), // Temporary unique ID for the note
-      text: newNote,
+      _id: Date.now().toString(), // Temporary ID
+      text: newNote, // Text with potential newlines or HTML formatting
     };
 
-    // Optimistically add the new note to the UI
+    // Optimistically add the new note
     setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
 
-    // Attempt to send the new note to the server
     axios
       .post('https://notes-server.madebyosama.com', { text: newNote })
-      .then((response) => {
-        console.log('Note added:', response.data);
-      })
+      .then((response) => console.log('Note added:', response.data))
       .catch((error) => {
         console.error('Failed to add note:', error);
-        // Rollback the optimistic update
+        // Rollback if the request fails
         setNotes((prevNotes) =>
           prevNotes.filter((note) => note._id !== newNoteObject._id)
         );
       });
 
-    // Clear the textarea
-    setNewNote('');
+    setNewNote(''); // Clear the textarea
   };
 
   const deleteNote = async (noteId: string) => {
@@ -113,6 +109,7 @@ export default function Home() {
       <div>
         <form className={styles.form}>
           <textarea
+            contentEditable
             autoFocus
             required
             className={styles.textarea}
@@ -132,7 +129,12 @@ export default function Home() {
           {notes?.length !== 0 ? (
             notes?.map((note) => (
               <div key={note._id} className={styles.note}>
-                <div className={styles.text}>{note.text}</div>
+                <div
+                  className={styles.text}
+                  dangerouslySetInnerHTML={{
+                    __html: note.text.replace(/\n/g, '<br />'),
+                  }}
+                ></div>
 
                 <div
                   className={styles.delete}
