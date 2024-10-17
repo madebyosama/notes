@@ -20,6 +20,8 @@ body {
   margin: auto;
   box-sizing: border-box;
   background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @media (prefers-color-scheme: dark) {
