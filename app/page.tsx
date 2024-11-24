@@ -110,7 +110,6 @@ export default function Home() {
         <form className={styles.form}>
           <textarea
             contentEditable
-            autoFocus
             required
             className={styles.textarea}
             placeholder='Note'
