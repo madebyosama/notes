@@ -128,7 +128,15 @@ export default function Home() {
         <div>
           {notes?.length !== 0 ? (
             notes?.map((note) => (
-              <div key={note._id} className={styles.note}>
+              <div
+                key={note._id}
+                className={styles.note}
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    note.text.replace(/<[^>]+>/g, '').replace(/\n/g, ' ')
+                  )
+                }
+              >
                 <div
                   className={styles.text}
                   dangerouslySetInnerHTML={{

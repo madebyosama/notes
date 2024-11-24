@@ -36,6 +36,11 @@
   margin-bottom: 12px;
   overflow-wrap: break-word;
   font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.note:active {
+  transform: scale(0.95);
 }
 
 .text {
