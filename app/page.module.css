@@ -39,10 +39,6 @@
   transition: all 0.3s ease;
 }
 
-.note:active {
-  transform: scale(0.95);
-}
-
 .text {
   margin-right: 64px;
 }
@@ -92,19 +88,23 @@
 
 @media (prefers-color-scheme: dark) {
   .textarea {
-    background: #2f2f2f;
+    background: var(--color8);
     color: #e4e4e4;
   }
 
   .note {
-    background: #2f2f2f;
+    background: var(--color8);
+  }
+
+  .note:active {
+    background-color: var(--color7);
   }
 
   .text {
     color: #ccc;
   }
   .delete:hover {
-    background-color: #444;
+    background-color: var(--color7);
   }
 }
 

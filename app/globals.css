@@ -1,11 +1,21 @@
 :root {
-  --icon-color: #4d4d4d;
+  --icon-color: var(--color7);
   --text-color: #757575;
+  --color1: #fff;
+  --color2: #f5f5f5;
+  --color3: #e3e3e3;
+  --color4: #eee;
+  --color5: #ccc;
+  --color6: #888;
+  --color7: #3c3c3c;
+  --color8: #2e2e2e;
+  --color9: #212121;
+  --color10: #000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --icon-color: #888;
+    --icon-color: var(--color6);
   }
 }
 
@@ -26,7 +36,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #212121;
+    background-color: var(--color9);
   }
 }
 
