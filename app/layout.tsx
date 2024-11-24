@@ -32,11 +32,6 @@ export default function RootLayout({
         />
         <meta name='apple-mobile-web-app-title' content='Notes' />
         <link rel='manifest' href='/site.webmanifest' />
-        <script
-          defer
-          src='https://cloud.umami.is/script.js'
-          data-website-id='9f2b2e03-0f3c-440b-961d-4336b3cd5ff0'
-        ></script>
         <meta name='robots' content='noindex, nofollow' />
       </head>
       <body className={myFont.className}>{children}</body>
