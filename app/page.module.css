@@ -36,7 +36,7 @@
   margin-bottom: 12px;
   overflow-wrap: break-word;
   font-weight: 500;
-  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .text {
@@ -49,19 +49,11 @@
   font-weight: 500;
 }
 
-.icon {
-  transition: all 0.3s ease-in-out;
-}
-
-.icon:hover {
-  transform: scale(1.3);
-}
-
 .delete {
   position: absolute;
   border-radius: 999px;
   top: 12px;
-  right: 16px;
+  right: 12px;
   padding: 3px 5px 0px 5px;
   cursor: pointer;
 }
@@ -70,41 +62,33 @@
   background-color: #ececec;
 }
 
-.copy {
-  position: absolute;
-  border-radius: 999px;
-  top: 12px;
-  right: 48px;
-  padding: 3px 5px 0px 5px;
-  cursor: pointer;
-}
-
-.note:hover .copy {
-  display: block;
-}
 .note:hover .delete {
   display: block;
 }
 
 @media (prefers-color-scheme: dark) {
   .textarea {
-    background: var(--color8);
+    background-color: var(--color8);
     color: #e4e4e4;
   }
 
   .note {
-    background: var(--color8);
+    background-color: var(--color8);
+  }
+
+  .note:hover {
+    background-color: var(--color7);
   }
 
   .note:active {
-    background-color: var(--color7);
+    background-color: var(--color8);
   }
 
   .text {
     color: #ccc;
   }
   .delete:hover {
-    background-color: var(--color7);
+    background-color: var(--color5);
   }
 }
 
