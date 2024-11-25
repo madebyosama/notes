@@ -36,7 +36,6 @@
   margin-bottom: 12px;
   overflow-wrap: break-word;
   font-weight: 500;
-  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -77,19 +76,11 @@
     background-color: var(--color8);
   }
 
-  .note:hover {
-    background-color: var(--color7);
-  }
-
-  .note:active {
-    background-color: var(--color8);
-  }
-
   .text {
     color: #ccc;
   }
   .delete:hover {
-    background-color: var(--color5);
+    background-color: var(--color7);
   }
 }
 
