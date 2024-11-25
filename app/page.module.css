@@ -37,6 +37,7 @@
   overflow-wrap: break-word;
   font-weight: 500;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .text {
