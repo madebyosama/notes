@@ -3,6 +3,7 @@
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Loading from './components/loading/Loading';
 
 interface Note {
   _id: string;
@@ -12,6 +13,7 @@ interface Note {
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState<string>('');
+  const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   // Function to handle scroll events
@@ -51,8 +53,10 @@ export default function Home() {
 
   useEffect(() => {
     async function fetch() {
+      setLoading(true);
       const res = await axios.get('https://notes-server.madebyosama.com');
       setNotes(res.data);
+      setLoading(false);
     }
     fetch();
   }, []);
@@ -115,39 +119,43 @@ export default function Home() {
           />
         </form>
       </div>
-
-      <div>
-        {notes?.length !== 0 ? (
-          notes?.map((note) => (
-            <div
-              key={note._id}
-              className={styles.note}
-              onClick={() =>
-                navigator.clipboard.writeText(
-                  note.text.replace(/<[^>]+>/g, '').replace(/\n/g, ' ')
-                )
-              }
-            >
+      {loading ? (
+        <div>
+          <Loading />
+        </div>
+      ) : (
+        <div>
+          {notes?.length !== 0 ? (
+            notes?.map((note) => (
               <div
-                className={styles.text}
-                dangerouslySetInnerHTML={{
-                  __html: note.text.replace(/\n/g, '<br />'),
-                }}
-              ></div>
-
-              <div
-                className={styles.delete}
-                onClick={() => deleteNote(note._id)}
+                key={note._id}
+                className={styles.note}
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    note.text.replace(/<[^>]+>/g, '').replace(/\n/g, ' ')
+                  )
+                }
               >
-                {deleteIcon}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className={styles.empty}></div>
-        )}
-      </div>
+                <div
+                  className={styles.text}
+                  dangerouslySetInnerHTML={{
+                    __html: note.text.replace(/\n/g, '<br />'),
+                  }}
+                ></div>
 
+                <div
+                  className={styles.delete}
+                  onClick={() => deleteNote(note._id)}
+                >
+                  {deleteIcon}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className={styles.empty}>Empty</div>
+          )}
+        </div>
+      )}
       <div className={styles.footer}>
         <div
           className={`${styles['back-to-top']} ${
