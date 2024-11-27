@@ -8,6 +8,7 @@ import Loading from './components/loading/Loading';
 interface Note {
   _id: string;
   text: string;
+  timestamp?: number; // Add timestamp for cache management
 }
 
 export default function Home() {
@@ -15,6 +16,49 @@ export default function Home() {
   const [newNote, setNewNote] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+
+  // Cache management constants
+  const CACHE_KEY = 'notes_cache';
+  const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+
+  // Load notes from local storage or fetch from server
+  useEffect(() => {
+    async function loadNotes() {
+      // Check local storage first
+      const cachedData = localStorage.getItem(CACHE_KEY);
+
+      if (cachedData) {
+        const { notes: cachedNotes, timestamp } = JSON.parse(cachedData);
+
+        // Check if cache is still valid
+        if (Date.now() - timestamp < CACHE_EXPIRY) {
+          setNotes(cachedNotes);
+        }
+      }
+
+      // Always try to fetch latest from server
+      try {
+        setLoading(true);
+        const res = await axios.get('https://notes-server.madebyosama.com');
+
+        // Update local state and storage
+        setNotes(res.data);
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            notes: res.data,
+            timestamp: Date.now(),
+          })
+        );
+      } catch (error) {
+        console.error('Failed to fetch notes', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadNotes();
+  }, []);
 
   // Function to handle scroll events
   function handleScroll() {
@@ -68,39 +112,93 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = () => {
-    if (!newNote.trim()) return; // Prevent adding empty notes
+  // Modify handleSubmit to update local storage
+  const handleSubmit = async () => {
+    if (!newNote.trim()) return;
 
-    const newNoteObject = {
-      _id: Date.now().toString(), // Temporary ID
-      text: newNote, // Text with potential newlines or HTML formatting
+    const newNoteObject: Note = {
+      _id: Date.now().toString(),
+      text: newNote,
+      timestamp: Date.now(),
     };
 
-    // Optimistically add the new note
-    setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
+    // Optimistic update
+    const updatedNotes = [newNoteObject, ...notes];
+    setNotes(updatedNotes);
 
-    axios
-      .post('https://notes-server.madebyosama.com', { text: newNote })
-      .then((response) => console.log('Note added:', response.data))
-      .catch((error) => {
-        console.error('Failed to add note:', error);
-        // Rollback if the request fails
-        setNotes((prevNotes) =>
-          prevNotes.filter((note) => note._id !== newNoteObject._id)
+    // Update local storage
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({
+        notes: updatedNotes,
+        timestamp: Date.now(),
+      })
+    );
+
+    try {
+      const response = await axios.post(
+        'https://notes-server.madebyosama.com',
+        { text: newNote }
+      );
+
+      // Update with server-generated ID if needed
+      if (response.data._id) {
+        const finalNotes = updatedNotes.map((note) =>
+          note._id === newNoteObject._id
+            ? { ...note, _id: response.data._id }
+            : note
         );
-      });
 
-    setNewNote(''); // Clear the textarea
+        setNotes(finalNotes);
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            notes: finalNotes,
+            timestamp: Date.now(),
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Failed to add note:', error);
+
+      // Rollback
+      const rolledBackNotes = notes.filter(
+        (note) => note._id !== newNoteObject._id
+      );
+      setNotes(rolledBackNotes);
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          notes: rolledBackNotes,
+          timestamp: Date.now(),
+        })
+      );
+    }
+
+    setNewNote('');
   };
 
+  // Modify delete to update local storage
   const deleteNote = async (noteId: string) => {
+    const updatedNotes = notes.filter((note) => note._id !== noteId);
+
+    // Optimistic update
+    setNotes(updatedNotes);
+
+    // Update local storage
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({
+        notes: updatedNotes,
+        timestamp: Date.now(),
+      })
+    );
+
     try {
-      if (notes) {
-        setNotes(notes.filter((note) => note._id !== noteId));
-      }
       await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
     } catch (error) {
       console.error('Failed to delete note:', error);
+      // Potential rollback logic if needed
     }
   };
 
@@ -144,7 +242,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <div className={styles.empty}>Empty</div>
+            <Loading />
           )}
         </div>
       )}
