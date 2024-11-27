@@ -217,35 +217,35 @@ export default function Home() {
           />
         </form>
       </div>
-      {loading ? (
+      {/* {loading ? (
         <div>
           <Loading />
         </div>
-      ) : (
-        <div>
-          {notes?.length !== 0 ? (
-            notes?.map((note) => (
-              <div key={note._id} className={styles.note}>
-                <div
-                  className={styles.text}
-                  dangerouslySetInnerHTML={{
-                    __html: note.text.replace(/\n/g, '<br />'),
-                  }}
-                ></div>
+      ) : ( */}
+      <div>
+        {notes?.length !== 0 ? (
+          notes?.map((note) => (
+            <div key={note._id} className={styles.note}>
+              <div
+                className={styles.text}
+                dangerouslySetInnerHTML={{
+                  __html: note.text.replace(/\n/g, '<br />'),
+                }}
+              ></div>
 
-                <div
-                  className={styles.delete}
-                  onClick={() => deleteNote(note._id)}
-                >
-                  {deleteIcon}
-                </div>
+              <div
+                className={styles.delete}
+                onClick={() => deleteNote(note._id)}
+              >
+                {deleteIcon}
               </div>
-            ))
-          ) : (
-            <Loading />
-          )}
-        </div>
-      )}
+            </div>
+          ))
+        ) : (
+          <Loading />
+        )}
+      </div>
+      {/* )} */}
       <div className={styles.footer}>
         <div
           className={`${styles['back-to-top']} ${
