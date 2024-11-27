@@ -120,9 +120,7 @@ export default function Home() {
         </form>
       </div>
       {loading ? (
-        <div>
-          <Loading />
-        </div>
+        <div className={styles.text}>Loading...</div>
       ) : (
         <div>
           {notes?.length !== 0 ? (
