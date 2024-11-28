@@ -3,6 +3,7 @@
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Loading from './components/Loading/Loading';
 
 interface Note {
   _id: string;
@@ -119,7 +120,9 @@ export default function Home() {
         </form>
       </div>
       {loading ? (
-        <div className={styles.text}>Loading...</div>
+        <div className={styles.text}>
+          <Loading />
+        </div>
       ) : (
         <div>
           {notes?.length !== 0 ? (
