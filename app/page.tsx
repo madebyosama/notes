@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import styles from './page.module.css';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Note {
@@ -12,31 +12,19 @@ interface Note {
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
-  // Fetch notes on component mount
-  useEffect(() => {
-    async function fetchNotes() {
-      try {
-        const response = await axios.get('/api/notes');
-        setNotes(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch notes:', error);
-        setLoading(false);
-      }
-    }
-    fetchNotes();
-  }, []);
-
-  // Scroll to top functionality
+  // Function to handle scroll events
   function handleScroll() {
     setShowScrollToTop(window.scrollY > 200);
   }
 
+  // Add scroll event listener using useEffect
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
+
+    // Cleanup the event listener when the component is unmounted
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -45,7 +33,6 @@ export default function Home() {
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
   const deleteIcon = (
     <svg
       width='16'
@@ -63,42 +50,54 @@ export default function Home() {
     </svg>
   );
 
+  useEffect(() => {
+    async function fetch() {
+      setLoading(true);
+      const res = await axios.get('https://notes-server.madebyosama.com');
+      setNotes(res.data);
+      setLoading(false);
+    }
+    fetch();
+  }, []);
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSubmit();
+      event.preventDefault(); // Stop the default Enter key behavior
+      handleSubmit(); // Directly call handleSubmit
     }
   };
 
-  const handleSubmit = async () => {
-    if (!newNote.trim()) return;
+  const handleSubmit = () => {
+    if (!newNote.trim()) return; // Prevent adding empty notes
 
     const newNoteObject = {
-      _id: Date.now().toString(),
-      text: newNote,
+      _id: Date.now().toString(), // Temporary ID
+      text: newNote, // Text with potential newlines or HTML formatting
     };
 
-    // Optimistically add the note
+    // Optimistically add the new note
     setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
 
-    try {
-      await axios.post('/api/notes', { text: newNote });
-      setNewNote('');
-    } catch (error) {
-      console.error('Failed to add note:', error);
-      // Rollback if the request fails
-      setNotes((prevNotes) =>
-        prevNotes.filter((note) => note._id !== newNoteObject._id)
-      );
-    }
+    axios
+      .post('https://notes-server.madebyosama.com', { text: newNote })
+      .then((response) => console.log('Note added:', response.data))
+      .catch((error) => {
+        console.error('Failed to add note:', error);
+        // Rollback if the request fails
+        setNotes((prevNotes) =>
+          prevNotes.filter((note) => note._id !== newNoteObject._id)
+        );
+      });
+
+    setNewNote(''); // Clear the textarea
   };
 
   const deleteNote = async (noteId: string) => {
     try {
-      // Optimistically remove the note
-      setNotes((prevNotes) => prevNotes.filter((note) => note._id !== noteId));
-
-      await axios.delete(`/api/notes?id=${noteId}`);
+      if (notes) {
+        setNotes(notes.filter((note) => note._id !== noteId));
+      }
+      await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
     } catch (error) {
       console.error('Failed to delete note:', error);
     }
@@ -113,9 +112,9 @@ export default function Home() {
             required
             className={styles.textarea}
             placeholder='Note'
-            value={newNote}
+            value={newNote} // Bind the textarea value to state
             onChange={(e) => setNewNote(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyDown} // Use the onKeyDown event handler
           />
         </form>
       </div>
