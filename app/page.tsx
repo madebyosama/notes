@@ -1,9 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import styles from './page.module.css';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
-import Loading from './components/loading/Loading';
 
 interface Note {
   _id: string;
@@ -13,19 +12,31 @@ interface Note {
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
-  // Function to handle scroll events
+  // Fetch notes on component mount
+  useEffect(() => {
+    async function fetchNotes() {
+      try {
+        const response = await axios.get('/api/notes');
+        setNotes(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch notes:', error);
+        setLoading(false);
+      }
+    }
+    fetchNotes();
+  }, []);
+
+  // Scroll to top functionality
   function handleScroll() {
     setShowScrollToTop(window.scrollY > 200);
   }
 
-  // Add scroll event listener using useEffect
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
-
-    // Cleanup the event listener when the component is unmounted
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -34,6 +45,7 @@ export default function Home() {
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
   const deleteIcon = (
     <svg
       width='16'
@@ -51,54 +63,42 @@ export default function Home() {
     </svg>
   );
 
-  useEffect(() => {
-    async function fetch() {
-      setLoading(true);
-      const res = await axios.get('https://notes-server.madebyosama.com');
-      setNotes(res.data);
-      setLoading(false);
-    }
-    fetch();
-  }, []);
-
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Stop the default Enter key behavior
-      handleSubmit(); // Directly call handleSubmit
+      event.preventDefault();
+      handleSubmit();
     }
   };
 
-  const handleSubmit = () => {
-    if (!newNote.trim()) return; // Prevent adding empty notes
+  const handleSubmit = async () => {
+    if (!newNote.trim()) return;
 
     const newNoteObject = {
-      _id: Date.now().toString(), // Temporary ID
-      text: newNote, // Text with potential newlines or HTML formatting
+      _id: Date.now().toString(),
+      text: newNote,
     };
 
-    // Optimistically add the new note
+    // Optimistically add the note
     setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
 
-    axios
-      .post('https://notes-server.madebyosama.com', { text: newNote })
-      .then((response) => console.log('Note added:', response.data))
-      .catch((error) => {
-        console.error('Failed to add note:', error);
-        // Rollback if the request fails
-        setNotes((prevNotes) =>
-          prevNotes.filter((note) => note._id !== newNoteObject._id)
-        );
-      });
-
-    setNewNote(''); // Clear the textarea
+    try {
+      await axios.post('/api/notes', { text: newNote });
+      setNewNote('');
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      // Rollback if the request fails
+      setNotes((prevNotes) =>
+        prevNotes.filter((note) => note._id !== newNoteObject._id)
+      );
+    }
   };
 
   const deleteNote = async (noteId: string) => {
     try {
-      if (notes) {
-        setNotes(notes.filter((note) => note._id !== noteId));
-      }
-      await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
+      // Optimistically remove the note
+      setNotes((prevNotes) => prevNotes.filter((note) => note._id !== noteId));
+
+      await axios.delete(`/api/notes?id=${noteId}`);
     } catch (error) {
       console.error('Failed to delete note:', error);
     }
@@ -113,9 +113,9 @@ export default function Home() {
             required
             className={styles.textarea}
             placeholder='Note'
-            value={newNote} // Bind the textarea value to state
+            value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            onKeyDown={handleKeyDown} // Use the onKeyDown event handler
+            onKeyDown={handleKeyDown}
           />
         </form>
       </div>
