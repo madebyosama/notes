@@ -1,9 +1,10 @@
 'use client';
 
 import styles from './page.module.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import Loading from './components/Loading/Loading';
+import debounce from 'lodash.debounce';
 
 interface Note {
   _id: string;
@@ -17,9 +18,12 @@ export default function Home() {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   // Function to handle scroll events
-  function handleScroll() {
-    setShowScrollToTop(window.scrollY > 200);
-  }
+  const handleScroll = useCallback(
+    debounce(() => {
+      setShowScrollToTop(window.scrollY > 200);
+    }, 100),
+    []
+  );
 
   // Add scroll event listener using useEffect
   useEffect(() => {
@@ -29,26 +33,30 @@ export default function Home() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
+  }, [handleScroll]);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  const deleteIcon = (
-    <svg
-      width='16'
-      height='16'
-      viewBox='0 0 16 16'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <path
-        d='M14.4848 1.5154L1.51562 14.4837M14.4848 14.4846L1.51562 1.51632'
-        stroke='var(--icon-color)'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-      />
-    </svg>
+  const deleteIcon = useMemo(
+    () => (
+      <svg
+        width='16'
+        height='16'
+        viewBox='0 0 16 16'
+        fill='none'
+        xmlns='http://www.w3.org/2000/svg'
+      >
+        <path
+          d='M14.4848 1.5154L1.51562 14.4837M14.4848 14.4846L1.51562 1.51632'
+          stroke='var(--icon-color)'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+      </svg>
+    ),
+    []
   );
 
   useEffect(() => {
@@ -61,14 +69,17 @@ export default function Home() {
     fetch();
   }, []);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Stop the default Enter key behavior
-      handleSubmit(); // Directly call handleSubmit
-    }
-  };
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Stop the default Enter key behavior
+        handleSubmit(); // Directly call handleSubmit
+      }
+    },
+    [newNote]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!newNote.trim()) return; // Prevent adding empty notes
 
     const newNoteObject = {
@@ -91,18 +102,21 @@ export default function Home() {
       });
 
     setNewNote(''); // Clear the textarea
-  };
+  }, [newNote]);
 
-  const deleteNote = async (noteId: string) => {
-    try {
-      if (notes) {
-        setNotes(notes.filter((note) => note._id !== noteId));
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      try {
+        if (notes) {
+          setNotes(notes.filter((note) => note._id !== noteId));
+        }
+        await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
+      } catch (error) {
+        console.error('Failed to delete note:', error);
       }
-      await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-    }
-  };
+    },
+    [notes]
+  );
 
   return (
     <div className={styles.notes}>
