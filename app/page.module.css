@@ -21,14 +21,7 @@
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   min-width: 100%;
-  min-height: 48px;
-}
-
-.textarea:focus {
-  width: 70vw;
-  height: 70vh;
-  max-width: 70vw;
-  max-height: 70vh;
+  min-height: 150px;
 }
 
 .note {
