@@ -100,6 +100,7 @@ export async function DELETE(request: Request) {
     response.headers.set('Access-Control-Allow-Origin', '*');
     return response;
   } catch (error) {
+    console.error('Failed to delete note:', error);
     const response = NextResponse.json(
       { error: 'Failed to delete note' },
       { status: 500 }
