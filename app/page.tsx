@@ -1,6 +1,7 @@
+// app/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import styles from './page.module.css';
 import Loading from './components/Loading/Loading';
 import debounce from 'lodash.debounce';
@@ -102,41 +103,41 @@ export default function Home() {
       if (!response.ok) {
         throw new Error('Failed to add note');
       }
-
-      const savedNote = await response.json();
-      setNotes((prev) => [savedNote, ...prev]);
     } catch (error) {
       console.error('Failed to add note:', error);
+      setNotes((prev) => prev.filter((note) => note.id !== tempNote.id));
     }
   }, [newNote]);
 
-  const deleteNote = useCallback(async (id: string) => {
+  const deleteNote = useCallback(async (noteId: string) => {
     try {
-      const response = await fetch(`/api/notes?id=${id}`, {
+      setNotes((prev) => prev.filter((note) => note.id !== noteId));
+
+      const response = await fetch(`/api/notes?id=${noteId}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete note');
       }
-
-      setNotes((prev) => prev.filter((note) => note.id !== id));
     } catch (error) {
       console.error('Failed to delete note:', error);
+      // Refetch notes to restore state
+      const response = await fetch('/api/notes');
+      const data = await response.json();
+      setNotes(data);
     }
   }, []);
 
   return (
-    <div className={styles.container}>
-      <h1>Notes App</h1>
-      <div className={styles.inputContainer}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-        >
+    <div className={styles.notes}>
+      <div>
+        <form className={styles.form}>
           <textarea
+            contentEditable
+            required
+            className={styles.textarea}
+            placeholder='Note'
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -167,15 +168,38 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <p>No notes available</p>
+            <div className={styles.empty}>Empty</div>
           )}
         </div>
       )}
-      {showScrollToTop && (
-        <button onClick={scrollToTop} className={styles.scrollToTop}>
-          Scroll to top
-        </button>
-      )}
+      <div className={styles.footer}>
+        <div
+          className={`${styles['back-to-top']} ${
+            showScrollToTop && styles.show
+          }`}
+          onClick={scrollToTop}
+        >
+          <svg
+            width='24'
+            height='20'
+            viewBox='0 0 24 20'
+            fill='none'
+            xmlns='http://www.w3.org/2000/svg'
+          >
+            <g clipPath='url(#clip0_7_23)'>
+              <path
+                d='M6.80385 7C9.11325 3 10.2679 1 12 1C13.7321 1 14.8868 3 17.1962 7L18.0622 8.5C20.3716 12.5 21.5263 14.5 20.6603 16C19.7942 17.5 17.4848 17.5 12.866 17.5H11.134C6.51517 17.5 4.20577 17.5 3.33975 16C2.47372 14.5 3.62842 12.5 5.93782 8.5L6.80385 7Z'
+                fill='#5C5C5C'
+              />
+            </g>
+            <defs>
+              <clipPath id='clip0_7_23'>
+                <rect width='24' height='20' fill='white' />
+              </clipPath>
+            </defs>
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
