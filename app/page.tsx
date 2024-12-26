@@ -134,9 +134,7 @@ export default function Home() {
         </form>
       </div>
       {loading ? (
-        <div className={styles.text}>
-          <Loading />
-        </div>
+        <Loading />
       ) : (
         <div>
           {notes?.length !== 0 ? (

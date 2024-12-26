@@ -26,6 +26,7 @@ html {
 }
 
 body {
+  max-width: 320px;
   margin: auto;
   box-sizing: border-box;
   background-color: #ffffff;
