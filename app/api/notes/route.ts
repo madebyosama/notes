@@ -32,12 +32,16 @@ export async function GET() {
     await ensureDirectory();
     await initializeNotesFile();
     const notesData = await fs.readFile(NOTES_FILE, 'utf-8');
-    return NextResponse.json(JSON.parse(notesData));
+    const response = NextResponse.json(JSON.parse(notesData));
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   } catch (error) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Failed to read notes' },
       { status: 500 }
     );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   }
 }
 
@@ -59,9 +63,16 @@ export async function POST(request: Request) {
     notes.unshift(newNote);
     await fs.writeFile(NOTES_FILE, JSON.stringify(notes, null, 2));
 
-    return NextResponse.json(newNote, { status: 201 });
+    const response = NextResponse.json(newNote, { status: 201 });
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to add note' }, { status: 500 });
+    const response = NextResponse.json(
+      { error: 'Failed to add note' },
+      { status: 500 }
+    );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   }
 }
 
@@ -71,10 +82,12 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Note ID is required' },
         { status: 400 }
       );
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      return response;
     }
 
     const notesData = await fs.readFile(NOTES_FILE, 'utf-8');
@@ -83,11 +96,15 @@ export async function DELETE(request: Request) {
 
     await fs.writeFile(NOTES_FILE, JSON.stringify(filteredNotes, null, 2));
 
-    return NextResponse.json({ message: 'Note deleted' });
+    const response = NextResponse.json({ message: 'Note deleted' });
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   } catch (error) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Failed to delete note' },
       { status: 500 }
     );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    return response;
   }
 }
