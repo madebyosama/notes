@@ -1,23 +1,23 @@
-// app/page.tsx
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
 import styles from './page.module.css';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import axios from 'axios';
 import Loading from './components/Loading/Loading';
 import debounce from 'lodash.debounce';
 
 interface Note {
-  id: string;
+  _id: string;
   text: string;
-  timestamp: number;
 }
 
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
+  // Function to handle scroll events
   const handleScroll = useCallback(
     debounce(() => {
       setShowScrollToTop(window.scrollY > 200);
@@ -25,9 +25,14 @@ export default function Home() {
     []
   );
 
+  // Add scroll event listener using useEffect
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Cleanup the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [handleScroll]);
 
   const scrollToTop = useCallback(() => {
@@ -55,79 +60,63 @@ export default function Home() {
   );
 
   useEffect(() => {
-    async function fetchNotes() {
-      try {
-        const response = await fetch('/api/notes');
-        const data = await response.json();
-        setNotes(data);
-      } catch (error) {
-        console.error('Failed to fetch notes:', error);
-      } finally {
-        setLoading(false);
-      }
+    async function fetch() {
+      setLoading(true);
+      const res = await axios.get('https://notes-server.madebyosama.com');
+      setNotes(res.data);
+      setLoading(false);
     }
-    fetchNotes();
+    fetch();
   }, []);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        handleSubmit();
+        event.preventDefault(); // Stop the default Enter key behavior
+        handleSubmit(); // Directly call handleSubmit
       }
     },
     [newNote]
   );
 
-  const handleSubmit = useCallback(async () => {
-    if (!newNote.trim()) return;
+  const handleSubmit = useCallback(() => {
+    if (!newNote.trim()) return; // Prevent adding empty notes
 
-    const tempNote = {
-      id: Date.now().toString(),
-      text: newNote,
-      timestamp: Date.now(),
+    const newNoteObject = {
+      _id: Date.now().toString(), // Temporary ID
+      text: newNote, // Text with potential newlines or HTML formatting
     };
 
-    setNotes((prev) => [tempNote, ...prev]);
-    setNewNote('');
+    // Optimistically add the new note
+    setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
 
-    try {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: newNote }),
+    axios
+      .post('https://notes-server.madebyosama.com', { text: newNote })
+      .then((response) => console.log('Note added:', response.data))
+      .catch((error) => {
+        console.error('Failed to add note:', error);
+        // Rollback if the request fails
+        setNotes((prevNotes) =>
+          prevNotes.filter((note) => note._id !== newNoteObject._id)
+        );
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to add note');
-      }
-    } catch (error) {
-      console.error('Failed to add note:', error);
-      setNotes((prev) => prev.filter((note) => note.id !== tempNote.id));
-    }
+    setNewNote(''); // Clear the textarea
   }, [newNote]);
 
-  const deleteNote = useCallback(async (noteId: string) => {
-    try {
-      setNotes((prev) => prev.filter((note) => note.id !== noteId));
-
-      const response = await fetch(`/api/notes?id=${noteId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete note');
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      try {
+        if (notes) {
+          setNotes(notes.filter((note) => note._id !== noteId));
+        }
+        await axios.delete(`https://notes-server.madebyosama.com/${noteId}`);
+      } catch (error) {
+        console.error('Failed to delete note:', error);
       }
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-      // Refetch notes to restore state
-      const response = await fetch('/api/notes');
-      const data = await response.json();
-      setNotes(data);
-    }
-  }, []);
+    },
+    [notes]
+  );
 
   return (
     <div className={styles.notes}>
@@ -138,30 +127,31 @@ export default function Home() {
             required
             className={styles.textarea}
             placeholder='Note'
-            value={newNote}
+            value={newNote} // Bind the textarea value to state
             onChange={(e) => setNewNote(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyDown} // Use the onKeyDown event handler
           />
         </form>
       </div>
       {loading ? (
-        <div>
+        <div className={styles.text}>
           <Loading />
         </div>
       ) : (
         <div>
           {notes?.length !== 0 ? (
             notes?.map((note) => (
-              <div key={note.id} className={styles.note}>
+              <div key={note._id} className={styles.note}>
                 <div
                   className={styles.text}
                   dangerouslySetInnerHTML={{
                     __html: note.text.replace(/\n/g, '<br />'),
                   }}
                 ></div>
+
                 <div
                   className={styles.delete}
-                  onClick={() => deleteNote(note.id)}
+                  onClick={() => deleteNote(note._id)}
                 >
                   {deleteIcon}
                 </div>
