@@ -1,7 +1,7 @@
 'use client';
 
 import styles from './page.module.css';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import Loading from './components/Loading/Loading';
 import debounce from 'lodash.debounce';
@@ -17,6 +17,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
+
+  // Store refs to note elements
+  const noteRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const handleScroll = useCallback(
     debounce(() => {
@@ -114,7 +117,6 @@ export default function Home() {
     [notes]
   );
 
-  // Debounced update function
   const debouncedUpdate = useMemo(
     () =>
       debounce(async (noteId: string, newText: string) => {
@@ -147,13 +149,36 @@ export default function Home() {
   );
 
   const handleNoteBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    // Only blur if clicking outside the note (not on the delete button)
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setEditingNote(null);
     }
   }, []);
 
-  // Handle escape key to exit editing mode
+  // Handle note click and focus
+  const handleNoteClick = useCallback(
+    (noteId: string) => {
+      if (!editingNote) {
+        setEditingNote(noteId);
+        // Focus the note after a short delay to ensure contentEditable is enabled
+        setTimeout(() => {
+          const noteElement = noteRefs.current[noteId];
+          if (noteElement) {
+            noteElement.focus();
+            // Move cursor to end of text
+            const range = document.createRange();
+            const selection = window.getSelection();
+            range.selectNodeContents(noteElement);
+            range.collapse(false);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          }
+        }, 0);
+      }
+    },
+    [editingNote]
+  );
+
+  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -199,11 +224,12 @@ export default function Home() {
                 className={`${styles.note} ${
                   editingNote === note._id ? styles.editing : ''
                 }`}
-                onClick={() => !editingNote && setEditingNote(note._id)}
+                onClick={() => handleNoteClick(note._id)}
                 tabIndex={0}
                 onBlur={handleNoteBlur}
               >
                 <div
+                  ref={(el: any) => (noteRefs.current[note._id] = el)}
                   className={styles.text}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
@@ -213,10 +239,13 @@ export default function Home() {
                       handleNoteChange(note._id, newText);
                     }
                   }}
-                  dangerouslySetInnerHTML={{
-                    __html: note.text.replace(/\n/g, '<br />'),
+                  onInput={(e) => {
+                    const newText = e.currentTarget.innerText;
+                    handleNoteChange(note._id, newText);
                   }}
-                />
+                >
+                  {note.text}
+                </div>
                 <div
                   className={styles.delete}
                   onClick={(e) => {
