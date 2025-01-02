@@ -25,27 +25,6 @@ export default function Home() {
     []
   );
 
-  // Debounced update function to prevent too many API calls
-  const debouncedUpdate = useMemo(
-    () =>
-      debounce(async (noteId: string, newText: string) => {
-        try {
-          await axios.patch(`https://notes-server.madebyosama.com/${noteId}`, {
-            text: newText,
-          });
-        } catch (error) {
-          console.error('Failed to update note:', error);
-          // Revert changes on error
-          setNotes((prevNotes) =>
-            prevNotes.map((note) =>
-              note._id === noteId ? { ...note, text: note.text } : note
-            )
-          );
-        }
-      }, 1000),
-    []
-  );
-
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
 
@@ -135,6 +114,26 @@ export default function Home() {
     [notes]
   );
 
+  // Debounced update function
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce(async (noteId: string, newText: string) => {
+        try {
+          await axios.patch(`https://notes-server.madebyosama.com/${noteId}`, {
+            text: newText,
+          });
+        } catch (error) {
+          console.error('Failed to update note:', error);
+          setNotes((prevNotes) =>
+            prevNotes.map((note) =>
+              note._id === noteId ? { ...note, text: note.text } : note
+            )
+          );
+        }
+      }, 1000),
+    []
+  );
+
   const handleNoteChange = useCallback(
     (noteId: string, newText: string) => {
       setNotes((prevNotes) =>
@@ -147,12 +146,35 @@ export default function Home() {
     [debouncedUpdate]
   );
 
-  const handleNoteBlur = useCallback(() => {
-    setEditingNote(null);
+  const handleNoteBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    // Only blur if clicking outside the note (not on the delete button)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setEditingNote(null);
+    }
   }, []);
+
+  // Handle escape key to exit editing mode
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditingNote(null);
+      }
+    };
+
+    if (editingNote) {
+      window.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [editingNote]);
 
   return (
     <div className={styles.notes}>
+      <div
+        className={`${styles.overlay} ${editingNote ? styles.visible : ''}`}
+      />
       <div>
         <form className={styles.form}>
           <textarea
@@ -174,15 +196,18 @@ export default function Home() {
             notes?.map((note) => (
               <div
                 key={note._id}
-                className={styles.note}
-                onClick={() => setEditingNote(note._id)}
+                className={`${styles.note} ${
+                  editingNote === note._id ? styles.editing : ''
+                }`}
+                onClick={() => !editingNote && setEditingNote(note._id)}
+                tabIndex={0}
+                onBlur={handleNoteBlur}
               >
                 <div
                   className={styles.text}
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   onBlur={(e) => {
-                    handleNoteBlur();
                     const newText = e.currentTarget.innerText;
                     if (newText !== note.text) {
                       handleNoteChange(note._id, newText);
