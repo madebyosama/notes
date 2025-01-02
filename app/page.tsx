@@ -205,7 +205,7 @@ export default function Home() {
               >
                 <div
                   className={styles.text}
-                  contentEditable={true}
+                  contentEditable={editingNote ? true : false}
                   suppressContentEditableWarning={true}
                   onBlur={(e) => {
                     const newText = e.currentTarget.innerText;
