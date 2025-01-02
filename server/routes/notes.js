@@ -11,6 +11,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.patch('/:noteId', async (req, res) => {
+  try {
+    const updatedNote = await Note.findByIdAndUpdate(
+      req.params.noteId,
+      { text: req.body.text },
+      { new: true }
+    );
+    res.json(updatedNote);
+  } catch (error) {
+    res.json({ message: error });
+  }
+});
+
 router.post('/', async (req, res) => {
   const note = new Note({
     text: req.body.text,

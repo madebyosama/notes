@@ -16,8 +16,8 @@ export default function Home() {
   const [newNote, setNewNote] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
 
-  // Function to handle scroll events
   const handleScroll = useCallback(
     debounce(() => {
       setShowScrollToTop(window.scrollY > 200);
@@ -25,11 +25,30 @@ export default function Home() {
     []
   );
 
-  // Add scroll event listener using useEffect
+  // Debounced update function to prevent too many API calls
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce(async (noteId: string, newText: string) => {
+        try {
+          await axios.patch(`https://notes-server.madebyosama.com/${noteId}`, {
+            text: newText,
+          });
+        } catch (error) {
+          console.error('Failed to update note:', error);
+          // Revert changes on error
+          setNotes((prevNotes) =>
+            prevNotes.map((note) =>
+              note._id === noteId ? { ...note, text: note.text } : note
+            )
+          );
+        }
+      }, 1000),
+    []
+  );
+
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
 
-    // Cleanup the event listener when the component is unmounted
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -72,22 +91,21 @@ export default function Home() {
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Stop the default Enter key behavior
-        handleSubmit(); // Directly call handleSubmit
+        event.preventDefault();
+        handleSubmit();
       }
     },
     [newNote]
   );
 
   const handleSubmit = useCallback(() => {
-    if (!newNote.trim()) return; // Prevent adding empty notes
+    if (!newNote.trim()) return;
 
     const newNoteObject = {
-      _id: Date.now().toString(), // Temporary ID
-      text: newNote, // Text with potential newlines or HTML formatting
+      _id: Date.now().toString(),
+      text: newNote,
     };
 
-    // Optimistically add the new note
     setNotes((prevNotes) => [newNoteObject, ...prevNotes]);
 
     axios
@@ -95,13 +113,12 @@ export default function Home() {
       .then((response) => console.log('Note added:', response.data))
       .catch((error) => {
         console.error('Failed to add note:', error);
-        // Rollback if the request fails
         setNotes((prevNotes) =>
           prevNotes.filter((note) => note._id !== newNoteObject._id)
         );
       });
 
-    setNewNote(''); // Clear the textarea
+    setNewNote('');
   }, [newNote]);
 
   const deleteNote = useCallback(
@@ -118,6 +135,22 @@ export default function Home() {
     [notes]
   );
 
+  const handleNoteChange = useCallback(
+    (noteId: string, newText: string) => {
+      setNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note._id === noteId ? { ...note, text: newText } : note
+        )
+      );
+      debouncedUpdate(noteId, newText);
+    },
+    [debouncedUpdate]
+  );
+
+  const handleNoteBlur = useCallback(() => {
+    setEditingNote(null);
+  }, []);
+
   return (
     <div className={styles.notes}>
       <div>
@@ -127,9 +160,9 @@ export default function Home() {
             required
             className={styles.textarea}
             placeholder='Note'
-            value={newNote} // Bind the textarea value to state
+            value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            onKeyDown={handleKeyDown} // Use the onKeyDown event handler
+            onKeyDown={handleKeyDown}
           />
         </form>
       </div>
@@ -139,17 +172,32 @@ export default function Home() {
         <div>
           {notes?.length !== 0 ? (
             notes?.map((note) => (
-              <div key={note._id} className={styles.note}>
+              <div
+                key={note._id}
+                className={styles.note}
+                onClick={() => setEditingNote(note._id)}
+              >
                 <div
                   className={styles.text}
+                  contentEditable={true}
+                  suppressContentEditableWarning={true}
+                  onBlur={(e) => {
+                    handleNoteBlur();
+                    const newText = e.currentTarget.innerText;
+                    if (newText !== note.text) {
+                      handleNoteChange(note._id, newText);
+                    }
+                  }}
                   dangerouslySetInnerHTML={{
                     __html: note.text.replace(/\n/g, '<br />'),
                   }}
-                ></div>
-
+                />
                 <div
                   className={styles.delete}
-                  onClick={() => deleteNote(note._id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteNote(note._id);
+                  }}
                 >
                   {deleteIcon}
                 </div>

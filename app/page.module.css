@@ -41,6 +41,7 @@
 
 .text {
   margin-right: 64px;
+  outline: none;
 }
 
 .text,
