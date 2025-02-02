@@ -39,7 +39,3 @@ body {
     background-color: var(--color9);
   }
 }
-
-::-webkit-scrollbar {
-  display: none;
-}
