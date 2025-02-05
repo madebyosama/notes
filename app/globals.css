@@ -1,41 +1,43 @@
 :root {
-  --icon-color: var(--color7);
-  --text-color: #757575;
-  --color1: #fff;
+  /* Consolidated color variables */
+  --color1: #fff; /* Base White */
   --color2: #f5f5f5;
   --color3: #e3e3e3;
   --color4: #eee;
   --color5: #ccc;
-  --color6: #888;
-  --color7: #3c3c3c;
+  --color6: #888; /* Dark mode icon */
+  --color7: #3c3c3c; /* Light mode icon */
   --color8: #2e2e2e;
-  --color9: #212121;
+  --color9: #212121; /* Dark background */
   --color10: #000;
+
+  /* Semantic variables */
+  --icon-color: var(--color7);
+  --body-bg: var(--color1);
+  --text-color: #757575;
+
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
 }
 
+/* Combined dark mode media query */
 @media (prefers-color-scheme: dark) {
   :root {
     --icon-color: var(--color6);
+    --body-bg: var(--color9);
   }
 }
 
 html {
-  scroll-behavior: smooth !important;
   overflow-y: scroll;
-  -webkit-font-smoothing: antialiased;
-}
-
-body {
-  max-width: 320px;
-  margin: auto;
-  box-sizing: border-box;
-  background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: var(--color9);
-  }
+body {
+  box-sizing: border-box;
+  max-width: 320px;
+  margin: auto;
+  background-color: var(--body-bg);
+  color: var(--text-color);
 }
