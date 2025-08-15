@@ -15,15 +15,11 @@
   min-height: 80px;
   font-family: var(--font-nunito);
   font-size: 16px;
-  background-color: #f9f9f9;
+  background-color: var(--textarea-background);
   border: none;
   border-radius: 12px;
-
+  color: var(--textarea-color);
   resize: vertical;
-}
-
-.textarea:focus {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .editTextarea {
@@ -45,13 +41,14 @@
 }
 
 .noteItem {
-  background-color: cornsilk;
+  background-color: var(--note-background);
   padding: 24px 32px;
   margin-bottom: 8px;
   border-radius: 8px;
   position: relative;
   font-family: var(--font-nunito);
   font-size: 16px;
+  color: var(--note-color);
 }
 
 .deleteButton {

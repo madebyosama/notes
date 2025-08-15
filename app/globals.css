@@ -1,9 +1,32 @@
 :root {
+  --color1: #fff;
+  --color2: #f5f5f5;
+  --color3: #e3e3e3;
+  --color4: #eee;
+  --color5: #ccc;
+  --color6: #888;
+  --color7: #3c3c3c;
+  --color8: #2e2e2e;
+  --color9: #212121;
+  --color10: #000;
+  --background: var(--color1);
+  --foreground: var(--color9);
+  --icon-color: var(--color1);
+  --textarea-background: var(--color2);
+  --note-background: #fdf8dc;
+  --note-color: var(--color10);
 }
 
-body {
-  font-family: var(--font-nunito), sans-serif;
-  width: 100%;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--color9);
+    --foreground: var(--color1);
+    --icon-color: var(--color1);
+    --textarea-background: var(--color8);
+    --textarea-color: var(--color4);
+    --note-background: var(--color7);
+    --note-color: var(--color1);
+  }
 }
 
 * {
@@ -16,6 +39,12 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-nunito), sans-serif;
+  width: 100%;
+  background-color: var(--background);
 }
 
 html {
