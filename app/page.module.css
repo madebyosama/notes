@@ -1,142 +1,89 @@
-.notes {
-  margin: 64px auto;
+.container {
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+  font-family: var(--font-nunito);
 }
 
-/* Form Styles */
-.form {
-  display: flex;
-  margin: 0px 0px 32px 0px;
-}
-
-/* Common styles for textarea and note */
-.textarea,
-.note {
-  background: #f4f4f4;
-  border: none !important;
-  border-radius: 24px;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 12px 24px;
-  box-sizing: border-box;
-  min-width: 100%;
+.inputSection {
+  margin-bottom: 20px;
 }
 
 .textarea {
-  outline: none;
-  min-height: 150px;
+  width: 100%;
+  padding: 16px 16px;
+  min-height: 80px;
+  font-family: var(--font-nunito);
+  font-size: 16px;
+  background-color: #f9f9f9;
+  border: none;
+  border-radius: 12px;
+
+  resize: vertical;
 }
 
-.note {
+.textarea:focus {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 12px 12px;
+  min-height: 60px;
+  background-color: #f9f9f9;
+  font-family: var(--font-nunito);
+  font-size: 16px;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  resize: vertical;
+}
+
+.notesList {
+  list-style: none;
+  padding: 0;
+}
+
+.noteItem {
+  background-color: cornsilk;
+  padding: 24px 32px;
+  margin-bottom: 8px;
+  border-radius: 8px;
   position: relative;
-  padding: 20px 24px;
-  margin-bottom: 12px;
-  overflow-wrap: break-word;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0s ease 0s;
-  z-index: 1;
+  font-family: var(--font-nunito);
+  font-size: 16px;
 }
 
-/* Text Styles */
-.text {
-  margin-right: 64px;
-  outline: none;
-}
-
-.text,
-.empty {
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-/* Delete Button */
-.delete {
+.deleteButton {
   position: absolute;
-  border-radius: 999px;
-  top: 12px;
-  right: 12px;
-  padding: 3px 5px 0px 5px;
+  bottom: 4px;
+  right: 8px;
+
+  cursor: var(--cursor-pointer, pointer);
+}
+
+.copyButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  cursor: var(--cursor-pointer, pointer);
+}
+
+.copyIcon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.deleteIcon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.noteContent {
+  margin: 0;
   cursor: pointer;
-}
-
-.delete:hover {
-  background-color: #ececec;
-}
-
-.note:hover .delete {
-  display: block;
-}
-
-/* Overlay */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-  z-index: 10;
-}
-
-.overlay.visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Note Editing State */
-.note.editing {
-  position: relative;
-  transform: translateY(-20px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  z-index: 20;
-}
-
-/* Visibility Classes */
-.hide {
-  opacity: 0;
-}
-
-.show {
-  opacity: 1;
-}
-
-/* Dark Mode Styles */
-@media (prefers-color-scheme: dark) {
-  .textarea,
-  .note {
-    background-color: var(--color8);
-  }
-
-  .textarea {
-    color: #e4e4e4;
-  }
-
-  .text {
-    color: #ccc;
-  }
-
-  .delete:hover {
-    background-color: var(--color7);
-  }
-
-  .back-to-top {
-    background-color: #292929;
-    border: 1px solid #292929;
-  }
-
-  .back-to-top:hover {
-    background-color: #313131;
-    border: 1px solid #424242;
-  }
-
-  .overlay {
-    background: rgba(0, 0, 0, 0.7);
-  }
-
-  .note.editing {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-  }
+  white-space: pre-wrap;
 }

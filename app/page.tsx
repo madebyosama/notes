@@ -1,266 +1,239 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import axios from 'axios';
-import debounce from 'lodash.debounce';
-import Loading from './components/Loading/Loading';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/app/lib/supabaseClient';
 import styles from './page.module.css';
 
-interface Note {
-  _id: string;
-  text: string;
-}
+type Note = {
+  id: string;
+  content: string;
+  created_at: string;
+};
 
-const API_BASE_URL = 'https://notes-server.madebyosama.com';
+const NOTES_STORAGE_KEY = 'notes-app-data';
 
-const DeleteIcon = () => (
-  <svg
-    width='16'
-    height='16'
-    viewBox='0 0 16 16'
-    fill='none'
-    xmlns='http://www.w3.org/2000/svg'
-  >
-    <path
-      d='M14.4848 1.5154L1.51562 14.4837M14.4848 14.4846L1.51562 1.51632'
-      stroke='var(--icon-color)'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-    />
-  </svg>
-);
+export default function NotesPage() {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [content, setContent] = useState('');
 
-export default function Home() {
-  const [state, setState] = useState({
-    notes: [] as Note[],
-    newNote: '',
-    loading: true,
-    showScrollToTop: false,
-    editingNote: null as string | null,
-  });
+  // Track which note is being edited
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
 
-  // Memoized API calls
-  const api = useMemo(
-    () => ({
-      fetchNotes: () => axios.get<Note[]>(API_BASE_URL),
-      addNote: (text: string) => axios.post(API_BASE_URL, { text }),
-      updateNote: (id: string, text: string) =>
-        axios.patch(`${API_BASE_URL}/${id}`, { text }),
-      deleteNote: (id: string) => axios.delete(`${API_BASE_URL}/${id}`),
-    }),
-    []
-  );
-
-  // Scroll handling
   useEffect(() => {
-    const handleScroll = debounce(() => {
-      setState((prev) => ({ ...prev, showScrollToTop: window.scrollY > 200 }));
-    }, 100);
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Load from localStorage first for immediate display
+    loadNotesFromLocalStorage();
+    // Then sync with database
+    fetchNotesFromDatabase();
   }, []);
 
-  // Initial data fetch
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await api.fetchNotes();
-        setState((prev) => ({ ...prev, notes: data, loading: false }));
-      } catch (error) {
-        console.error('Failed to fetch notes:', error);
-        setState((prev) => ({ ...prev, loading: false }));
+  function saveNotesToLocalStorage(notesData: Note[]) {
+    try {
+      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notesData));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }
+
+  function loadNotesFromLocalStorage() {
+    try {
+      const stored = localStorage.getItem(NOTES_STORAGE_KEY);
+      if (stored) {
+        const parsedNotes = JSON.parse(stored);
+        setNotes(parsedNotes);
       }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }
+
+  async function fetchNotesFromDatabase() {
+    const { data, error } = await supabase
+      .from('notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching notes:', error.message);
+    } else {
+      const dbNotes = data || [];
+      setNotes(dbNotes);
+      // Sync database data to localStorage
+      saveNotesToLocalStorage(dbNotes);
+    }
+  }
+
+  async function addNote() {
+    if (!content.trim()) return;
+
+    const noteContent = content.trim();
+    const tempId = `temp-${Date.now()}`;
+    const newNote: Note = {
+      id: tempId,
+      content: noteContent,
+      created_at: new Date().toISOString(),
     };
 
-    fetchData();
-  }, [api]);
+    // Optimistic update - add note immediately
+    setNotes((prev) => [newNote, ...prev]);
+    setContent('');
 
-  // Note operations
-  const handleNoteOperation = useCallback(
-    async (operation: () => Promise<void>, errorHandler?: () => void) => {
-      try {
-        await operation();
-      } catch (error) {
-        console.error('Operation failed:', error);
-        errorHandler?.();
+    const { data, error } = await supabase
+      .from('notes')
+      .insert([{ content: noteContent }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding note:', error.message);
+      // Revert optimistic update on error
+      setNotes((prev) => prev.filter((note) => note.id !== tempId));
+      setContent(noteContent); // Restore content for retry
+    } else {
+      // Replace temp note with real note
+      setNotes((prev) =>
+        prev.map((note) => (note.id === tempId ? data : note))
+      );
+    }
+  }
+
+  async function deleteNote(id: string) {
+    // Optimistic update - remove note immediately
+    const noteToDelete = notes.find((note) => note.id === id);
+    setNotes((prev) => prev.filter((note) => note.id !== id));
+
+    const { error } = await supabase.from('notes').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting note:', error.message);
+      // Revert optimistic update on error
+      if (noteToDelete) {
+        setNotes((prev) =>
+          [noteToDelete, ...prev].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          )
+        );
       }
-    },
-    []
-  );
+    }
+  }
 
-  const handleAddNote = useCallback(async () => {
-    if (!state.newNote.trim()) return;
+  async function saveEdit(id: string) {
+    if (!editingContent.trim()) return;
 
-    const tempId = Date.now().toString();
-    const newNote = { _id: tempId, text: state.newNote };
+    const trimmedContent = editingContent.trim();
+    const originalNote = notes.find((note) => note.id === id);
 
-    setState((prev) => ({
-      ...prev,
-      notes: [newNote, ...prev.notes],
-      newNote: '',
-    }));
-
-    await handleNoteOperation(
-      async () => {
-        const { data } = await api.addNote(state.newNote);
-        setState((prev) => ({
-          ...prev,
-          notes: prev.notes.map((n) => (n._id === tempId ? data : n)),
-        }));
-      },
-      () => {
-        setState((prev) => ({
-          ...prev,
-          notes: prev.notes.filter((n) => n._id !== tempId),
-        }));
-      }
+    // Optimistic update - update note immediately
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === id ? { ...note, content: trimmedContent } : note
+      )
     );
-  }, [state.newNote, api, handleNoteOperation]);
+    setEditingId(null);
 
-  // Modify both operations to explicitly return Promise<void>
-  const handleDeleteNote = useCallback(
-    async (noteId: string) => {
-      setState((prev) => ({
-        ...prev,
-        notes: prev.notes.filter((note) => note._id !== noteId),
-      }));
+    const { error } = await supabase
+      .from('notes')
+      .update({ content: trimmedContent })
+      .eq('id', id);
 
-      await handleNoteOperation(async () => {
-        await api.deleteNote(noteId);
-        return void 0; // Explicit void return
-      });
-    },
-    [api, handleNoteOperation]
-  );
-
-  const debouncedUpdate = useMemo(
-    () =>
-      debounce(async (noteId: string, newText: string) => {
-        await handleNoteOperation(async () => {
-          await api.updateNote(noteId, newText);
-          return void 0; // Explicit void return
-        });
-      }, 1000),
-    [api, handleNoteOperation]
-  );
-
-  const handleNoteChange = useCallback(
-    (noteId: string, newText: string) => {
-      setState((prev) => ({
-        ...prev,
-        notes: prev.notes.map((note) =>
-          note._id === noteId ? { ...note, text: newText } : note
-        ),
-      }));
-      debouncedUpdate(noteId, newText);
-    },
-    [debouncedUpdate]
-  );
-
-  // Event handlers
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleAddNote();
+    if (error) {
+      console.error('Error updating note:', error.message);
+      // Revert optimistic update on error
+      if (originalNote) {
+        setNotes((prev) =>
+          prev.map((note) => (note.id === id ? originalNote : note))
+        );
       }
-    },
-    [handleAddNote]
-  );
-
-  const handleNoteBlur = useCallback((e: React.FocusEvent) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setState((prev) => ({ ...prev, editingNote: null }));
+      // Re-enter edit mode with original content
+      setEditingId(id);
+      setEditingContent(originalNote?.content || '');
     }
-  }, []);
+  }
 
-  // Escape key handler
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setState((prev) => ({ ...prev, editingNote: null }));
-      }
-    };
-
-    if (state.editingNote) {
-      window.addEventListener('keydown', handleEscape);
+  async function copyNote(content: string) {
+    try {
+      await navigator.clipboard.writeText(content);
+      console.log('Note copied to clipboard');
+    } catch (error) {
+      console.error('Error copying note:', error);
     }
-
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [state.editingNote]);
+  }
 
   return (
-    <div className={styles.notes}>
-      <div
-        className={`${styles.overlay} ${
-          state.editingNote ? styles.visible : ''
-        }`}
-      />
-
-      <div>
-        <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-          <textarea
-            required
-            className={styles.textarea}
-            placeholder='Note'
-            value={state.newNote}
-            onChange={(e) =>
-              setState((prev) => ({ ...prev, newNote: e.target.value }))
+    <div className={styles.container}>
+      <div className={styles.inputSection}>
+        <textarea
+          placeholder='Write a note...'
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              addNote();
             }
-            onKeyDown={handleKeyDown}
-          />
-        </form>
+          }}
+          className={styles.textarea}
+        />
       </div>
 
-      {state.loading ? (
-        <Loading />
-      ) : (
-        <div>
-          {state.notes.length > 0 ? (
-            state.notes.map((note) => (
-              <div
-                key={note._id}
-                className={`${styles.note} ${
-                  state.editingNote === note._id ? styles.editing : ''
-                }`}
-                onClick={() =>
-                  !state.editingNote &&
-                  setState((prev) => ({ ...prev, editingNote: note._id }))
-                }
-                tabIndex={0}
-                onBlur={handleNoteBlur}
+      <ul className={styles.notesList}>
+        {notes.map((note) => (
+          <li key={note.id} className={styles.noteItem}>
+            <div
+              onClick={() => deleteNote(note.id)}
+              className={styles.deleteButton}
+            >
+              <img
+                src='/images/icons/general/delete.svg'
+                alt='Delete note'
+                className={styles.deleteIcon}
+              />
+            </div>
+
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                copyNote(note.content);
+              }}
+              className={styles.copyButton}
+            >
+              <img
+                src='/images/icons/general/copy.svg'
+                alt='Copy note'
+                className={styles.copyIcon}
+              />
+            </div>
+
+            {editingId === note.id ? (
+              <textarea
+                value={editingContent}
+                onChange={(e) => setEditingContent(e.target.value)}
+                onBlur={() => saveEdit(note.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveEdit(note.id);
+                  }
+                }}
+                className={styles.editTextarea}
+                autoFocus
+              />
+            ) : (
+              <p
+                onClick={() => {
+                  setEditingId(note.id);
+                  setEditingContent(note.content);
+                }}
+                className={styles.noteContent}
               >
-                <div
-                  className={styles.text}
-                  contentEditable={!!state.editingNote}
-                  suppressContentEditableWarning
-                  onBlur={(e) => {
-                    const newText = e.currentTarget.innerText;
-                    if (newText !== note.text) {
-                      handleNoteChange(note._id, newText);
-                    }
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: note.text.replace(/\n/g, '<br />'),
-                  }}
-                />
-                <div
-                  className={styles.delete}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteNote(note._id);
-                  }}
-                >
-                  <DeleteIcon />
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className={styles.empty}>Empty</div>
-          )}
-        </div>
-      )}
+                {note.content}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
+import { Nunito } from 'next/font/google';
 import './globals.css';
+
+const nunito = Nunito({
+  variable: '--font-nunito',
+  subsets: ['latin'],
+});
 
 export const metadata: Metadata = {
   title: 'Notes',
-  description: 'Simple Notes',
+  description: 'Notes app built with Next.js and Supabase',
 };
-
-const myFont = localFont({ src: './font.woff2' });
 
 export default function RootLayout({
   children,
@@ -34,7 +37,7 @@ export default function RootLayout({
         <link rel='manifest' href='/site.webmanifest' />
         <meta name='robots' content='noindex, nofollow' />
       </head>
-      <body className={myFont.className}>{children}</body>
+      <body className={`${nunito.variable}`}>{children}</body>
     </html>
   );
 }
