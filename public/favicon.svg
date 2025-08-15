@@ -1,8 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M0 256C0 158.687 20.4522 87.04 53.76 53.76C87.0678 20.48 158.753 0 256 0C353.355 0 424.96 20.4172 458.24 53.76C491.52 87.1028 512 158.795 512 256C512 353.323 491.556 424.96 458.24 458.24C424.924 491.52 353.237 512 256 512C158.796 512 87.1038 491.52 53.76 458.24C20.4162 424.96 0 353.356 0 256Z" fill="black"></path>
-<path d="M140.25 226.8C140.25 176.858 140.25 151.888 155.765 136.372C171.28 120.858 196.251 120.858 246.193 120.858H266.057C315.999 120.858 340.971 120.858 356.485 136.372C372 151.888 372 176.858 372 226.8V279.772C372 329.713 372 354.685 356.485 370.199C340.971 385.714 315.999 385.714 266.057 385.714H246.193C196.251 385.714 171.28 385.714 155.765 370.199C140.25 354.685 140.25 329.713 140.25 279.772V226.8Z" fill="white"></path>
-<path d="M206.465 286.393H259.436ZM206.465 220.179H312.408Z" fill="#D9D9D9"></path>
-<path d="M206.465 286.393H259.436M206.465 220.179H312.408" stroke="black" stroke-width="19.8643" stroke-linecap="round"></path>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 256C0 158.687 20.4522 87.04 53.76 53.76C87.0678 20.48 158.753 0 256 0C353.355 0 424.96 20.4172 458.24 53.76C491.52 87.1028 512 158.795 512 256C512 353.323 491.556 424.96 458.24 458.24C424.924 491.52 353.237 512 256 512C158.796 512 87.1038 491.52 53.76 458.24C20.4162 424.96 0 353.356 0 256Z" fill="#F4B400"></path>
+<path d="M154 319.267H255.814ZM154 192H357.628Z" fill="white"></path>
+<path d="M154 319.267H255.814M154 192H357.628" stroke="white" stroke-width="38.1802" stroke-linecap="round"></path>
 </svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
 @media (prefers-color-scheme: dark) { :root { filter: none; } }
 </style></svg>
