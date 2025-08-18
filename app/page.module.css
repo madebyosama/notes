@@ -22,7 +22,7 @@
   color: var(--textarea-color);
   resize: vertical;
   cursor: var(--cursor-text, text);
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.25, 0, 0.06, 1);
 }
 
 .textarea:focus {
