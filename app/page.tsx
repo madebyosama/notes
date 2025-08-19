@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/app/lib/supabaseClient';
 import styles from './page.module.css';
 
@@ -15,8 +15,6 @@ const NOTES_STORAGE_KEY = 'notes-app-data';
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [content, setContent] = useState('');
-
-  // Track which note is being edited
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
 
@@ -27,15 +25,15 @@ export default function NotesPage() {
     fetchNotesFromDatabase();
   }, []);
 
-  function saveNotesToLocalStorage(notesData: Note[]) {
+  const saveNotesToLocalStorage = useCallback((notesData: Note[]) => {
     try {
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notesData));
     } catch (error) {
       console.error('Error saving to localStorage:', error);
     }
-  }
+  }, []);
 
-  function loadNotesFromLocalStorage() {
+  const loadNotesFromLocalStorage = useCallback(() => {
     try {
       const stored = localStorage.getItem(NOTES_STORAGE_KEY);
       if (stored) {
@@ -45,9 +43,9 @@ export default function NotesPage() {
     } catch (error) {
       console.error('Error loading from localStorage:', error);
     }
-  }
+  }, []);
 
-  async function fetchNotesFromDatabase() {
+  const fetchNotesFromDatabase = useCallback(async () => {
     const { data, error } = await supabase
       .from('notes')
       .select('*')
@@ -58,12 +56,11 @@ export default function NotesPage() {
     } else {
       const dbNotes = data || [];
       setNotes(dbNotes);
-      // Sync database data to localStorage
       saveNotesToLocalStorage(dbNotes);
     }
-  }
+  }, [saveNotesToLocalStorage]);
 
-  async function addNote() {
+  const addNote = useCallback(async () => {
     if (!content.trim()) return;
 
     const noteContent = content.trim();
@@ -74,7 +71,6 @@ export default function NotesPage() {
       created_at: new Date().toISOString(),
     };
 
-    // Optimistic update - add note immediately
     setNotes((prev) => [newNote, ...prev]);
     setContent('');
 
@@ -86,80 +82,79 @@ export default function NotesPage() {
 
     if (error) {
       console.error('Error adding note:', error.message);
-      // Revert optimistic update on error
       setNotes((prev) => prev.filter((note) => note.id !== tempId));
-      setContent(noteContent); // Restore content for retry
+      setContent(noteContent);
     } else {
-      // Replace temp note with real note
       setNotes((prev) =>
         prev.map((note) => (note.id === tempId ? data : note))
       );
     }
-  }
+  }, [content]);
 
-  async function deleteNote(id: string) {
-    // Optimistic update - remove note immediately
-    const noteToDelete = notes.find((note) => note.id === id);
-    setNotes((prev) => prev.filter((note) => note.id !== id));
+  const deleteNote = useCallback(
+    async (id: string) => {
+      const noteToDelete = notes.find((note) => note.id === id);
+      setNotes((prev) => prev.filter((note) => note.id !== id));
 
-    const { error } = await supabase.from('notes').delete().eq('id', id);
+      const { error } = await supabase.from('notes').delete().eq('id', id);
 
-    if (error) {
-      console.error('Error deleting note:', error.message);
-      // Revert optimistic update on error
-      if (noteToDelete) {
-        setNotes((prev) =>
-          [noteToDelete, ...prev].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          )
-        );
+      if (error) {
+        console.error('Error deleting note:', error.message);
+        if (noteToDelete) {
+          setNotes((prev) =>
+            [noteToDelete, ...prev].sort(
+              (a, b) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            )
+          );
+        }
       }
-    }
-  }
+    },
+    [notes]
+  );
 
-  async function saveEdit(id: string) {
-    if (!editingContent.trim()) return;
+  const saveEdit = useCallback(
+    async (id: string) => {
+      if (!editingContent.trim()) return;
 
-    const trimmedContent = editingContent.trim();
-    const originalNote = notes.find((note) => note.id === id);
+      const trimmedContent = editingContent.trim();
+      const originalNote = notes.find((note) => note.id === id);
 
-    // Optimistic update - update note immediately
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === id ? { ...note, content: trimmedContent } : note
-      )
-    );
-    setEditingId(null);
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === id ? { ...note, content: trimmedContent } : note
+        )
+      );
+      setEditingId(null);
 
-    const { error } = await supabase
-      .from('notes')
-      .update({ content: trimmedContent })
-      .eq('id', id);
+      const { error } = await supabase
+        .from('notes')
+        .update({ content: trimmedContent })
+        .eq('id', id);
 
-    if (error) {
-      console.error('Error updating note:', error.message);
-      // Revert optimistic update on error
-      if (originalNote) {
-        setNotes((prev) =>
-          prev.map((note) => (note.id === id ? originalNote : note))
-        );
+      if (error) {
+        console.error('Error updating note:', error.message);
+        if (originalNote) {
+          setNotes((prev) =>
+            prev.map((note) => (note.id === id ? originalNote : note))
+          );
+        }
+        setEditingId(id);
+        setEditingContent(originalNote?.content || '');
       }
-      // Re-enter edit mode with original content
-      setEditingId(id);
-      setEditingContent(originalNote?.content || '');
-    }
-  }
+    },
+    [editingContent, notes]
+  );
 
-  async function copyNote(content: string) {
+  const copyNote = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
       console.log('Note copied to clipboard');
     } catch (error) {
       console.error('Error copying note:', error);
     }
-  }
+  }, []);
 
   return (
     <div className={styles.container}>
